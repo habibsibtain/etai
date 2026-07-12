@@ -1,0 +1,61 @@
+.map-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.leaflet-map-instance {
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  background-color: var(--color-bg-primary); /* For dark theme when tiles load */
+}
+
+/* Customizing Leaflet controls for Dark Theme */
+.leaflet-bar {
+  border: none !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.leaflet-bar a {
+  background-color: var(--color-bg-card) !important;
+  color: var(--color-text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.leaflet-bar a:hover {
+  background-color: var(--color-bg-card-hover) !important;
+  color: var(--color-accent) !important;
+}
+
+.leaflet-bar a:first-child {
+  border-top-left-radius: var(--radius-md) !important;
+  border-top-right-radius: var(--radius-md) !important;
+}
+
+.leaflet-bar a:last-child {
+  border-bottom-left-radius: var(--radius-md) !important;
+  border-bottom-right-radius: var(--radius-md) !important;
+  border-bottom: none !important;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background-color: var(--color-bg-card) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: var(--color-text-muted) !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: var(--color-text-primary) !important;
+}

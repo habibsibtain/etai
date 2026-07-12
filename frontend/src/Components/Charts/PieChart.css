@@ -1,0 +1,2 @@
+/* Reuses .chart-container and .chart-tooltip from LineChart.css */
+/* In a real app we might put tooltip styles in a common charts.css, but this is fine for now. */

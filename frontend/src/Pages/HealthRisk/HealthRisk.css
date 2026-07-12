@@ -1,0 +1,97 @@
+.health-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 100%;
+}
+
+.health-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.health-header p {
+  color: var(--color-text-secondary);
+}
+
+.health-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.health-layout {
+  display: flex;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 400px;
+}
+
+.health-main {
+  flex: 7;
+  display: flex;
+  flex-direction: column;
+}
+
+.health-map-wrapper {
+  flex: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.health-side {
+  flex: 3;
+  min-width: 350px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-wrapper {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.recommendations h4 {
+  margin-bottom: 1rem;
+  color: var(--color-text-primary);
+}
+
+.advisory-card {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  border-left: 4px solid;
+}
+
+.advisory-target {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.advisory-card p {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.severe {
+  background-color: rgba(239, 68, 68, 0.05);
+  border-left-color: var(--color-danger);
+}
+.severe .advisory-target { color: var(--color-danger); }
+
+.warning {
+  background-color: rgba(250, 204, 21, 0.05);
+  border-left-color: var(--color-warning);
+}
+.warning .advisory-target { color: var(--color-warning); }
+
+.info {
+  background-color: rgba(56, 189, 248, 0.05);
+  border-left-color: var(--color-accent);
+}
+.info .advisory-target { color: var(--color-accent); }

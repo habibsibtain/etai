@@ -1,0 +1,27 @@
+.app-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--color-bg-primary);
+}
+
+.main-content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: margin-left var(--transition-normal);
+  /* Sidebar width is handled in the Sidebar component directly, 
+     but we can adjust main layout here if we use absolute positioning.
+     For flexbox, it handles itself smoothly. */
+}
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  background-color: var(--color-bg-primary);
+}
