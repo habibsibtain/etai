@@ -1,67 +1,105 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import MapContainer from '../../Components/Map/MapContainer';
+import MarkerLayer from '../../Components/Map/MarkerLayer';
 import PieChart from '../../Components/Charts/PieChart';
 import BarChart from '../../Components/Charts/BarChart';
 import GaugeChart from '../../Components/Charts/GaugeChart';
 import EvidenceCard from '../../Components/Cards/EvidenceCard';
-import { Target, AlertCircle, FileSearch } from 'lucide-react';
+import { useCity } from '../../context/CityContext';
+import { fetchAttribution } from '../../services/api';
+import { Target, AlertCircle, FileSearch, Loader2 } from 'lucide-react';
 import './SourceAttribution.css';
 
-const sourceData = [
-  { name: 'Traffic', value: 45, color: '#EF4444' },
-  { name: 'Construction', value: 25, color: '#FACC15' },
-  { name: 'Industry', value: 15, color: '#A855F7' },
-  { name: 'Waste Burning', value: 10, color: '#F97316' },
-  { name: 'Others', value: 5, color: '#64748B' },
-];
-
-const shapData = [
-  { feature: 'Wind Speed', contribution: 0.8, color: '#38BDF8' },
-  { feature: 'Truck Traffic', contribution: 0.65, color: '#EF4444' },
-  { feature: 'Temperature', contribution: -0.4, color: '#22C55E' },
-  { feature: 'Humidity', contribution: 0.3, color: '#FACC15' },
-];
+const CITY_CENTERS = {
+  Delhi: [28.6139, 77.2090], Mumbai: [19.0760, 72.8777],
+  Kolkata: [22.5726, 88.3639], Bengaluru: [12.9716, 77.5946],
+  Chennai: [13.0827, 80.2707], Hyderabad: [17.3850, 78.4867],
+};
 
 const SourceAttribution = () => {
+  const { selectedCity, cityStations } = useCity();
+  const [selectedStation, setSelectedStation] = useState('');
+  const [attribution, setAttribution] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (cityStations.length > 0) {
+      setSelectedStation(cityStations[0].station_id);
+    }
+  }, [cityStations]);
+
+  useEffect(() => {
+    if (!selectedStation) return;
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await fetchAttribution(selectedStation);
+        if (data) setAttribution(data);
+      } catch (err) { console.warn('Attribution load failed:', err); }
+      finally { setLoading(false); }
+    }
+    load();
+  }, [selectedStation]);
+
+  const center = CITY_CENTERS[selectedCity] || [20.5937, 78.9629];
+  const markers = cityStations.filter(s => s.lat && s.lon && s.aqi).map(s => ({
+    name: s.name || s.station_id, lat: s.lat, lng: s.lon,
+    aqi: s.aqi || 0, pm25: s.pm25 || 0, lastUpdated: 'Live',
+  }));
+
+  const sourceData = attribution?.source_breakdown || [];
+  const shapData = attribution?.shap_features || [];
+  const evidence = attribution?.evidence || [];
+
   return (
     <div className="attribution-page">
       <div className="attribution-header">
         <h2><Target size={24} /> Pollution Source Attribution</h2>
-        <p>Identify primary contributors to local AQI spikes using ML attribution models.</p>
+        <p>ML-powered source identification at station level — {selectedCity}</p>
+      </div>
+
+      <div className="station-selector-bar">
+        <select className="custom-select station-select" value={selectedStation} onChange={(e) => setSelectedStation(e.target.value)}>
+          {cityStations.map(s => (
+            <option key={s.station_id} value={s.station_id}>
+              {s.name || s.station_id} — AQI: {s.aqi ? Math.round(s.aqi) : 'N/A'}
+            </option>
+          ))}
+        </select>
+        {attribution && <span className="zone-badge">{attribution.zone_type} zone</span>}
       </div>
 
       <div className="attribution-layout">
         <div className="attribution-left">
-          
           <div className="attribution-map panel-card">
-            <div className="panel-header">
-              <h3>Select Region</h3>
-            </div>
+            <div className="panel-header"><h3>Station Map</h3></div>
             <div className="map-wrapper-small">
-              <MapContainer center={[17.385, 78.486]} zoom={12} />
+              <MapContainer center={center} zoom={12} key={selectedCity}>
+                <MarkerLayer stations={markers} />
+              </MapContainer>
             </div>
           </div>
 
           <div className="attribution-charts">
             <div className="chart-panel panel-card">
-              <div className="panel-header">
-                <h3>Emission Sources</h3>
-              </div>
-              <PieChart data={sourceData} height={200} />
+              <div className="panel-header"><h3>Emission Sources</h3></div>
+              {loading ? (
+                <div className="loading-state"><Loader2 size={20} className="spinner-icon" /></div>
+              ) : (
+                <PieChart data={sourceData} height={200} />
+              )}
             </div>
             
             <div className="chart-panel panel-card">
-              <div className="panel-header">
-                <h3>SHAP Feature Importance</h3>
-              </div>
-              <BarChart 
-                data={shapData} 
-                xKey="feature" 
-                barKey="contribution" 
-                layout="vertical"
-                height={200}
-                name="Impact"
-              />
+              <div className="panel-header"><h3>Feature Importance (SHAP)</h3></div>
+              {loading ? (
+                <div className="loading-state"><Loader2 size={20} className="spinner-icon" /></div>
+              ) : (
+                <BarChart 
+                  data={shapData} xKey="feature" barKey="contribution" 
+                  layout="vertical" height={200} name="Impact"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -72,28 +110,29 @@ const SourceAttribution = () => {
           </div>
           
           <div className="gauge-section">
-            <GaugeChart value={89} title="Overall Attribution Confidence" color="var(--color-success)" height={160} />
+            <GaugeChart 
+              value={attribution?.overall_confidence || 0} 
+              title="Attribution Confidence" 
+              color="var(--color-success)" height={160} 
+            />
           </div>
 
           <div className="llm-summary">
             <h4><AlertCircle size={16} /> AI Summary</h4>
-            <p>
-              The model attributes <strong>45% of PM2.5</strong> in this ward to <strong>Traffic</strong>. 
-              This prediction is heavily influenced by the low wind speed and a 30% increase in heavy truck traffic over the last 4 hours on the NH65 highway.
-            </p>
+            {attribution?.ai_summary ? (
+              <p dangerouslySetInnerHTML={{ __html: attribution.ai_summary }} />
+            ) : (
+              <p>Select a station to see AI-powered source attribution analysis.</p>
+            )}
           </div>
 
           <div className="evidence-list">
             <h4>Supporting Evidence</h4>
-            <EvidenceCard title="Satellite Imagery" type="Visual Data" confidence={92}>
-              High density of NO2 concentration observed over the primary highway corridor crossing the selected ward.
-            </EvidenceCard>
-            <EvidenceCard title="Traffic API" type="Sensor Data" confidence={88}>
-              Average vehicle speed reduced by 15km/h indicating severe congestion.
-            </EvidenceCard>
-            <EvidenceCard title="Construction Permits" type="Registry" confidence={75}>
-              2 active commercial construction permits within 500m of the highest pollution node.
-            </EvidenceCard>
+            {evidence.map((ev, i) => (
+              <EvidenceCard key={i} title={ev.title} type={ev.type} confidence={ev.confidence}>
+                {ev.text}
+              </EvidenceCard>
+            ))}
           </div>
         </div>
       </div>

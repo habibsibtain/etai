@@ -1,13 +1,16 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { CityProvider } from './context/CityContext';
 import AppRoutes from './Routes/AppRoutes';
-import './App.css'; // Keep App.css if there's any specific app-level override needed
+import './App.css';
 
 function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <CityProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </CityProvider>
   );
 }
 

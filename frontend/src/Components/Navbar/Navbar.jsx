@@ -1,21 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, MapPin, Loader2, Map } from 'lucide-react';
+import { Search, Bell, MapPin, Loader2, Map, ChevronDown } from 'lucide-react';
+import { useCity } from '../../context/CityContext';
 import './Navbar.css';
 
 const Navbar = () => {
-  const [currentCity, setCurrentCity] = useState('Hyderabad');
+  const { selectedCity, changeCity, cities, citySummary } = useCity();
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showCityMenu, setShowCityMenu] = useState(false);
   
   const dropdownRef = useRef(null);
+  const cityMenuRef = useRef(null);
 
   useEffect(() => {
-    // Close dropdown when clicking outside
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
+      }
+      if (cityMenuRef.current && !cityMenuRef.current.contains(event.target)) {
+        setShowCityMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -27,7 +32,6 @@ const Navbar = () => {
       if (searchQuery.trim().length > 2) {
         setIsSearching(true);
         try {
-          // Nominatim OpenStreetMap API, restricted to India (countrycodes=in)
           const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&countrycodes=in&limit=5`);
           const data = await response.json();
           setResults(data);
@@ -41,29 +45,64 @@ const Navbar = () => {
         setResults([]);
         setShowDropdown(false);
       }
-    }, 500); // 500ms debounce
+    }, 500);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
   const handleSelectLocation = (location) => {
-    // Extract a concise name for the city display
     const nameParts = location.display_name.split(',');
-    setCurrentCity(nameParts[0].trim());
+    const cityName = nameParts[0].trim();
+    // Check if it matches any known city
+    const matchedCity = cities.find(c => c.toLowerCase() === cityName.toLowerCase());
+    if (matchedCity) {
+      changeCity(matchedCity);
+    }
     setSearchQuery('');
     setShowDropdown(false);
-    
-    // In a real app, we would probably dispatch this to a global store
-    // to update the map center. For now, we just update the UI.
   };
+
+  const getAqiBadgeClass = (aqi) => {
+    if (!aqi) return 'badge-muted';
+    if (aqi <= 50) return 'badge-good';
+    if (aqi <= 100) return 'badge-satisfactory';
+    if (aqi <= 200) return 'badge-moderate';
+    if (aqi <= 300) return 'badge-poor';
+    return 'badge-severe';
+  };
+
+  const currentAqi = citySummary?.avg_aqi;
 
   return (
     <header className="navbar">
       <div className="navbar-left">
-        <div className="location-selector">
-          <MapPin className="location-icon" size={18} />
-          <span className="current-city">{currentCity}</span>
-          <span className="city-aqi badge-warning">AQI: 142</span>
+        <div className="location-selector" ref={cityMenuRef}>
+          <button className="city-selector-btn" onClick={() => setShowCityMenu(!showCityMenu)}>
+            <MapPin className="location-icon" size={18} />
+            <span className="current-city">{selectedCity}</span>
+            <span className={`city-aqi ${getAqiBadgeClass(currentAqi)}`}>
+              AQI: {currentAqi ? Math.round(currentAqi) : '—'}
+            </span>
+            <ChevronDown size={14} className={`chevron ${showCityMenu ? 'rotated' : ''}`} />
+          </button>
+          
+          {showCityMenu && (
+            <div className="city-dropdown">
+              <div className="city-dropdown-header">Select City</div>
+              <ul>
+                {cities.map((city) => (
+                  <li 
+                    key={city} 
+                    className={city === selectedCity ? 'active' : ''}
+                    onClick={() => { changeCity(city); setShowCityMenu(false); }}
+                  >
+                    <MapPin size={14} />
+                    <span>{city}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
       
@@ -109,6 +148,10 @@ const Navbar = () => {
       </div>
       
       <div className="navbar-right">
+        <div className="live-indicator">
+          <span className="live-dot"></span>
+          <span className="live-text">Live</span>
+        </div>
         <button className="notification-btn">
           <Bell size={20} />
           <span className="notification-dot"></span>
