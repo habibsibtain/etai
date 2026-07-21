@@ -104,6 +104,14 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+async def root():
+    return {
+        "status": "running",
+        "service": "AQI-Intel Backend",
+        "docs": "/docs"
+    }
+    
 # ── Health Check ─────────────────────────────────────────────────────────────
 
 @app.get("/health")
@@ -115,7 +123,6 @@ async def health():
         "timestamp": datetime.now().isoformat(),
         "data_loaded": data_service._loaded,
     }
-
 
 # ── City & Station Endpoints ────────────────────────────────────────────────
 
